@@ -3,6 +3,7 @@
 text.slopegraph-column {
     font-size: 12px;
     font-family: Palatino,Georgia,Times,serif;
+    alignment-baseline: middle;
 }
 
 text.slopegraph-header {

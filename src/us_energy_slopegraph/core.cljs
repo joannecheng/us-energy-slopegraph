@@ -6,28 +6,29 @@
 
 (enable-console-print!)
 
-;; define your app data so that it doesn't get over-written on reload
-(def w 450)
+;; D3 Configuration variables 
+(def w 310)
 (def h 400)
-(def column-space 300)
+(def column-space 200)
 
-(defonce svg (.. (.select js/d3 "#slopegraph")
-                 (append "svg")
-                 (attr "height" h)
-                 (attr "width" w)))
-
-(defonce height-scale
+;; Helper functions
+(def height-scale
   (.. js/d3
       (scaleLinear)
       (domain #js [0 1])
-      (range #js [(- h 15) 2])))
+      (range #js [(- h 15) 0])))
 
 (defn format-fuel-name [fuel-name]
   (-> (name fuel-name)
       (str/capitalize)
       (str/replace #"-" " ")))
 
-(defn draw-header [years]
+(defn format-percent [percent]
+  (gstr/format "%.2f%%" (* 100 percent)))
+
+;; Functions that draw our SVG elements
+
+(defn draw-header [svg years]
   (.. svg
       (selectAll "text.slopegraph-header")
       (data (into-array years))
@@ -38,7 +39,7 @@
       (attr "y" 15)
       (text #(str %))))
 
-(defn column1 [data]
+(defn column1 [svg data]
   (.. svg
       (selectAll "text.slopegraph-column-1")
       (data (into-array data))
@@ -48,9 +49,9 @@
       (classed "slopegraph-column-1" true)
       (attr "x" 10)
       (attr "y" #(height-scale (val %)))
-      (text #(gstr/format "%.2%%" (* 100 (val %))))))
+      (text #(format-percent (val %)))))
 
-(defn column2 [data]
+(defn column2 [svg data]
   (.. svg
       (selectAll "text.slopegraph-column-2")
       (data (into-array data))
@@ -61,11 +62,11 @@
       (attr "x" column-space)
       (attr "y" #(height-scale (val %)))
       (text #(str
-              (gstr/format "%.2f%%" (* 100 (val %)))
+              (format-percent (val %))
               " "
               (format-fuel-name (key %))))))
 
-(defn draw-line [data-col-1 data-col-2]
+(defn draw-line [svg data-col-1 data-col-2]
   (.. svg
       (selectAll "line.slopegraph-line")
       (data (into-array data-col-1))
@@ -77,15 +78,21 @@
       (attr "y1" #(height-scale (val %)))
       (attr "y2" #(height-scale ((key %) data-col-2)))))
 
-(defn draw-slopegraph [data]
+(defn draw-slopegraph [svg data]
   (let [data-2005 (:values (first (filter #(= 2005 (:year %)) data)))
         data-2015 (:values (first (filter #(= 2015 (:year %)) data)))]
-    (draw-header [2005 2015])
-    (column1 data-2005)
-    (column2 data-2015)
-    (draw-line data-2005 data-2015)))
+    (draw-header svg [2005 2015])
+    (column1 svg data-2005)
+    (column2 svg data-2015)
+    (draw-line svg data-2005 data-2015)))
 
 ;; Drawing our slopegraph
+
+;; Creating our svg container
+(def svg (.. (.select js/d3 "#slopegraph")
+             (append "svg")
+             (attr "height" h)
+             (attr "width" w)))
 
 (def data
   [{:year 2005
@@ -97,10 +104,12 @@
              :coal 0.3039492492908485
              :nuclear 0.1976276775179704}}])
 
-(draw-slopegraph data)
+(defn ^:export main []
+  (draw-slopegraph svg data))
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
   ;; (swap! app-state update-in [:__figwheel_counter] inc)
-  )
+  (.remove (.select js/d3 "#slopegraph svg"))
+  (main))
