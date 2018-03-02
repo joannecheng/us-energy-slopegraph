@@ -1,0 +1,15 @@
+/* some style */
+
+text.slopegraph-column {
+    font-size: 12px;
+    font-family: Palatino,Georgia,Times,serif;
+}
+
+text.slopegraph-header {
+    font-family: Palatino,Georgia,Times,serif;
+    font-size: 16px;
+}
+
+line.slopegraph-line {
+    stroke: #aaa;
+}
