@@ -1,9 +1,8 @@
 (ns us-energy-slopegraph.core
-  (:require-macros [cljs.core.async.macros :refer [go]])
   (:require [clojure.string :as str]
             [cljsjs.d3]
-            [cljs-http.client :as http]
-            [cljs.core.async :refer [<!]]))
+            [goog.string.format]
+            [goog.string :as gstr]))
 
 (enable-console-print!)
 
@@ -49,7 +48,7 @@
       (classed "slopegraph-column-1" true)
       (attr "x" 10)
       (attr "y" #(height-scale (val %)))
-      (text #((.format js/d3 ".2%") (val %)))))
+      (text #(gstr/format "%.2%%" (* 100 (val %))))))
 
 (defn column2 [data]
   (.. svg
@@ -62,7 +61,7 @@
       (attr "x" column-space)
       (attr "y" #(height-scale (val %)))
       (text #(str
-              ((.format js/d3 ".2%") (val %))
+              (gstr/format "%.2f%%" (* 100 (val %)))
               " "
               (format-fuel-name (key %))))))
 
