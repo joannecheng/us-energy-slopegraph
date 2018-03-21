@@ -11,7 +11,6 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.async  "0.3.443"]
-                 [cljs-http "0.1.44"]
                  [cljsjs/d3 "4.12.0-0"]
                  [org.clojure/data.csv "0.1.4"]]
 

@@ -1,115 +1,105 @@
 (ns us-energy-slopegraph.core
-  (:require [clojure.string :as str]
-            [cljsjs.d3]
-            [goog.string.format]
-            [goog.string :as gstr]))
+    (:require [cljsjs.d3]))
 
 (enable-console-print!)
 
-;; D3 Configuration variables 
-(def w 310)
 (def h 400)
-(def column-space 200)
+(def w 400)
+(def column-1-start 70)
+(def column-space 300)
 
-;; Helper functions
+(def data {2005 {:natural-gas 0.2008611514256557
+                 :coal        0.48970650816857986
+                 :nuclear     0.19367190804075465}
+           2015 {:natural-gas 0.33808321253456974
+                 :coal        0.3039492492908485
+                 :nuclear     0.1976276775179704}})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; helpers
+
 (def height-scale
   (.. js/d3
       (scaleLinear)
       (domain #js [0 1])
       (range #js [(- h 15) 0])))
 
-(defn format-fuel-name [fuel-name]
-  (-> (name fuel-name)
-      (str/capitalize)
-      (str/replace #"-" " ")))
+(defn attrs [el m]
+  (doseq [[k v] m]
+    (.attr el k v)))
 
-(defn format-percent [percent]
-  (gstr/format "%.2f%%" (* 100 percent)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; draw functions
 
-;; Functions that draw our SVG elements
+(defn data-join
+  "Implement the d3 \"data join\" pattern.
+
+  Given a parent DOM element and a Clojure collection of data, create or remove
+  child elements with given tagname and class so they match the length of the data.
+
+  Returns a \"merge\" object, chain calls on it that need to happen for every
+  new or updated dom element."
+  [parent tag class data]
+  (let [join  (-> parent
+                  (.selectAll (str tag "." class))
+                  (.data (into-array data)))
+        enter (-> join
+                  (.enter)
+                  (.append tag)
+                  (.classed class true))]
+    (-> join (.exit) (.remove))
+    (.merge join enter)))
 
 (defn draw-header [svg years]
-  (.. svg
-      (selectAll "text.slopegraph-header")
-      (data (into-array years))
-      (enter)
-      (append "text")
-      (classed "slopegraph-header" true)
-      (attr "x" (fn [d i] (+ 10 (* i column-space)) ))
-      (attr "y" 15)
-      (text #(str %))))
-
-(defn column1 [svg data]
-  (.. svg
-      (selectAll "text.slopegraph-column-1")
-      (data (into-array data))
-      (enter)
-      (append "text")
-      (classed "slopegraph-column" true)
-      (classed "slopegraph-column-1" true)
-      (attr "x" 10)
-      (attr "y" #(height-scale (val %)))
-      (text #(format-percent (val %)))))
-
-(defn column2 [svg data]
-  (.. svg
-      (selectAll "text.slopegraph-column-2")
-      (data (into-array data))
-      (enter)
-      (append "text")
-      (classed "slopegraph-column" true)
-      (classed "slopegraph-column-2" true)
-      (attr "x" column-space)
-      (attr "y" #(height-scale (val %)))
-      (text #(str
-              (format-percent (val %))
-              " "
-              (format-fuel-name (key %))))))
+  (-> (data-join svg "text" "slopegraph-header" years)
+      (.text (fn [data _] (str data)))
+      (attrs {"x" (fn [_ index]
+                    (+ 10 (* index column-space)))
+              "y" 15})))
 
 (defn draw-line [svg data-col-1 data-col-2]
-  (.. svg
-      (selectAll "line.slopegraph-line")
-      (data (into-array data-col-1))
-      (enter)
-      (append "line")
-      (classed "slopegraph-line" true)
-      (attr "x1" 55)
-      (attr "x2" (- column-space 5))
-      (attr "y1" #(height-scale (val %)))
-      (attr "y2" #(height-scale ((key %) data-col-2)))))
+  (-> (data-join svg "line" "slopegraph-line" data-col-1)
+      (attrs {"x1" (+ 5 column-1-start)
+              "x2" (- column-space 5)
+              "y1" (fn [[_ v]]
+                     (height-scale v))
+              "y2" (fn [[k _]]
+                     (height-scale (get data-col-2 k)))}
+              )))
+
+(defn draw-column [svg data-col index custom-attrs]
+  (-> (data-join svg "text" (str "slopegraph-column-" index) data-col)
+      (.text (fn [[k _]] (name k)))
+      (attrs (merge custom-attrs
+                    {"y" (fn [[_ v]] (height-scale v))})
+             )))
 
 (defn draw-slopegraph [svg data]
-  (let [data-2005 (:values (first (filter #(= 2005 (:year %)) data)))
-        data-2015 (:values (first (filter #(= 2015 (:year %)) data)))]
+  (let [data-2005 (get data 2005)
+        data-2015 (get data 2015)]
     (draw-header svg [2005 2015])
-    (column1 svg data-2005)
-    (column2 svg data-2015)
+    (draw-column svg data-2005 1 {"x" column-1-start})
+    (draw-column svg data-2015 2 {"x" column-space})
     (draw-line svg data-2005 data-2015)))
 
-;; Drawing our slopegraph
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Lifecycle
 
-;; Creating our svg container
-(def svg (.. (.select js/d3 "#slopegraph")
-             (append "svg")
-             (attr "height" h)
-             (attr "width" w)))
+(defn append-svg []
+  (.. js/d3
+      (select "#slopegraph")
+      (append "svg")
+      (attr "height" h)
+      (attr "width" w)))
 
-(def data
-  [{:year 2005
-    :values {:natural-gas 0.2008611514256557
-             :coal 0.48970650816857986
-             :nuclear 0.19367190804075465}}
-   {:year 2015
-    :values {:natural-gas 0.33808321253456974
-             :coal 0.3039492492908485
-             :nuclear 0.1976276775179704}}])
+(defn remove-svg []
+  (.. js/d3
+      (select "#slopegraph svg")
+      (remove)))
 
 (defn ^:export main []
-  (draw-slopegraph svg data))
+  (let [svg (append-svg)]
+    (draw-slopegraph svg data)))
 
-(defn on-js-reload []
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
-  (.remove (.select js/d3 "#slopegraph svg"))
+(defn on-js-reload []  (remove-svg)
   (main))

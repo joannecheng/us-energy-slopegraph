@@ -1,9 +1,13 @@
 /* some style */
 
-text.slopegraph-column {
-    font-size: 12px;
+text.slopegraph-column-1, text.slopegraph-column-2 {
+    font-size: 14px;
     font-family: Palatino,Georgia,Times,serif;
     alignment-baseline: middle;
+}
+
+text.slopegraph-column-1 {
+    text-anchor: end;
 }
 
 text.slopegraph-header {
