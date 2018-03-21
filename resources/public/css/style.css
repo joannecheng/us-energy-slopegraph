@@ -18,3 +18,11 @@ text.slopegraph-header {
 line.slopegraph-line {
     stroke: #aaa;
 }
+
+@media (max-width: 480px) {
+    text.slopegraph-column-1, text.slopegraph-column-2 {
+        font-size: 12px;
+        font-family: Palatino,Georgia,Times,serif;
+        alignment-baseline: middle;
+    }
+}

@@ -5,7 +5,7 @@
 
 (def h 400)
 (def w 400)
-(def column-1-start 70)
+(def column-1-start 80)
 (def column-space 300)
 
 (def data {2005 {:natural-gas 0.2008611514256557
