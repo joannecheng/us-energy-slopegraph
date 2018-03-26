@@ -1,12 +1,13 @@
 (ns us-energy-slopegraph.core
-    (:require [cljsjs.d3]))
+  (:require [cljsjs.d3]
+            [clojure.string :as string]))
 
 (enable-console-print!)
 
 (def h 400)
-(def w 400)
-(def column-1-start 80)
-(def column-space 300)
+(def w 540)
+(def column-1-start (/ w 4))
+(def column-space (* 3 (/ w 4)))
 
 (def data {2005 {:natural-gas 0.2008611514256557
                  :coal        0.48970650816857986
@@ -27,6 +28,14 @@
 (defn attrs [el m]
   (doseq [[k v] m]
     (.attr el k v)))
+
+(defn format-percent [value]
+  ((.format js/d3 ".2%") value))
+
+(defn format-name [name-str]
+  (->
+   (string/replace name-str "-" " ")
+   (string/capitalize)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; draw functions
@@ -54,7 +63,7 @@
   (-> (data-join svg "text" "slopegraph-header" years)
       (.text (fn [data _] (str data)))
       (attrs {"x" (fn [_ index]
-                    (+ 10 (* index column-space)))
+                    (+ 50 (* index column-space)))
               "y" 15})))
 
 (defn draw-line [svg data-col-1 data-col-2]
@@ -69,7 +78,7 @@
 
 (defn draw-column [svg data-col index custom-attrs]
   (-> (data-join svg "text" (str "slopegraph-column-" index) data-col)
-      (.text (fn [[k _]] (name k)))
+      (.text (fn [[k v]] (str (format-name (name k)) " " (format-percent v))))
       (attrs (merge custom-attrs
                     {"y" (fn [[_ v]] (height-scale v))})
              )))
@@ -78,6 +87,7 @@
   (let [data-2005 (get data 2005)
         data-2015 (get data 2015)]
     (draw-header svg [2005 2015])
+
     (draw-column svg data-2005 1 {"x" column-1-start})
     (draw-column svg data-2015 2 {"x" column-space})
     (draw-line svg data-2005 data-2015)))
