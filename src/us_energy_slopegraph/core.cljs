@@ -4,7 +4,7 @@
 
 (enable-console-print!)
 
-(def h 400)
+(def h 450)
 (def w 540)
 (def column-1-start (/ w 4))
 (def column-space (* 3 (/ w 4)))
