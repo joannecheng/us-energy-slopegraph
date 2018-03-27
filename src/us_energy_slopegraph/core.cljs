@@ -20,10 +20,10 @@
 ;; helpers
 
 (def height-scale
-  (.. js/d3
-      (scaleLinear)
-      (domain #js [0 1])
-      (range #js [(- h 15) 0])))
+  (-> js/d3
+      (.scaleLinear)
+      (.domain #js [0 1])
+      (.range #js [(- h 15) 0])))
 
 (defn attrs [el m]
   (doseq [[k v] m]
@@ -96,20 +96,21 @@
 ;; Lifecycle
 
 (defn append-svg []
-  (.. js/d3
-      (select "#slopegraph")
-      (append "svg")
-      (attr "height" h)
-      (attr "width" w)))
+  (-> js/d3
+      (.select "#slopegraph")
+      (.append "svg")
+      (.attr "height" h)
+      (.attr "width" w)))
 
 (defn remove-svg []
-  (.. js/d3
-      (select "#slopegraph svg")
-      (remove)))
+  (-> js/d3
+      (.select "#slopegraph svg")
+      (.remove)))
 
 (defn ^:export main []
   (let [svg (append-svg)]
     (draw-slopegraph svg data)))
 
-(defn on-js-reload []  (remove-svg)
+(defn on-js-reload []
+  (remove-svg)
   (main))
