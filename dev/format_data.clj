@@ -12,6 +12,17 @@
         repeat)
 
        (rest csv-data)))
+
+(defn renewable-for-year [csv-data-map year]
+  (let [year-data (first (filter #(= year (:Year %)) csv-data-map))
+        total-for-year (:all-fuels year-data)
+        vals-for-year (vals (select-keys year-data
+                           [:solar :wind :biomass :geothermal :all-utility-scale-solar]))
+        ]
+    (/ (reduce + vals-for-year) total-for-year)
+    ))
+
+
 (defn values-for-year [csv-data-map year]
   (let [year-data (first (filter #(= year (:Year %)) csv-data-map))
         total-for-year (:all-fuels year-data)
