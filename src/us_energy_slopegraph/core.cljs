@@ -4,10 +4,10 @@
 
 (enable-console-print!)
 
-(def h 450)
-(def w 540)
-(def column-1-start (/ w 4))
-(def column-space (* 3 (/ w 4)))
+(def height 450)
+(def width 540)
+(def column-1-start (/ width 4))
+(def column-space (* 3 (/ width 4)))
 
 (def data {2005 {:natural-gas 0.2008611514256557
                  :coal        0.48970650816857986
@@ -23,7 +23,7 @@
   (-> js/d3
       (.scaleLinear)
       (.domain #js [0 1])
-      (.range #js [(- h 15) 0])))
+      (.range #js [(- height 15) 0])))
 
 (defn attrs [el m]
   (doseq [[k v] m]
@@ -99,8 +99,8 @@
   (-> js/d3
       (.select "#slopegraph")
       (.append "svg")
-      (.attr "height" h)
-      (.attr "width" w)))
+      (.attr "height" height)
+      (.attr "width" width)))
 
 (defn remove-svg []
   (-> js/d3
